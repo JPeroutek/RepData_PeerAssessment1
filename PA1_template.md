@@ -10,7 +10,9 @@ output:
 
 
 ```r
+library(chron)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
+library(lattice)
 if(!file.exists('activity.csv')) {
   unzip('activity.zip')
 }
@@ -140,4 +142,17 @@ print(paste("Median steps per day (imputed): ", median_steps_daily_imputed))
 ## [1] "Median steps per day (imputed):  10766.1886792453"
 ```
 
+Imputing the missing value with this method does not cause any significant changes to the daily mean/median values.
+
 ## Are there differences in activity patterns between weekdays and weekends?
+
+
+```r
+weekday_aggregations <- imputed_activity %>%
+  mutate(date = as.Date(date), weekend = is.weekend(date)) %>%
+  mutate(weekend = ifelse(is.weekend(date), "weekend", "weekday"))
+
+xyplot(steps ~ interval | weekend, data=weekday_aggregations, aspect=1/2, type="l")  
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
