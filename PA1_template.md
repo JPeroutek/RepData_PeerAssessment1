@@ -10,6 +10,7 @@ output:
 
 
 ```r
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 if(!file.exists('activity.csv')) {
   unzip('activity.zip')
 }
@@ -81,6 +82,62 @@ print(paste("Interval with maximum average steps: ", max_rows$interval))
 
 ## Imputing missing values
 
+The `date` and `interval` columns are complete, however the `steps` column is missing some values.
 
+
+```r
+# Confirming that we have no missing date or interval columns.
+missing_dates <- sum(is.na(activity$date))
+missing_intervals <- sum(is.na(activity$interval))
+
+# We are missing some steps values though.
+missing_steps <- sum(is.na(activity$steps))
+print(paste("Number of missing step values: ", missing_steps))
+```
+
+```
+## [1] "Number of missing step values:  2304"
+```
+
+To fill in the missing values, we will populate the `NA` values with the medians for that time interval.
+
+
+```r
+imputed_activity <- activity %>%
+  mutate(steps=as.double(steps)) %>%
+  inner_join(activity_pattern_agg, by="interval") %>%
+  mutate(steps=coalesce(steps.x, steps.y)) %>%
+  select(date, interval, steps)
+
+steps_per_date_imputed <- aggregate(steps ~ date, 
+                                    data = imputed_activity, 
+                                    sum)
+hist(steps_per_date_imputed$steps,
+     main = "Histogram of steps/day", 
+     xlab = "Number of steps")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+Clearly, imputing the missing values alters the frequency of the daily step counts.  Of note is the fact that the distribution remains roughly the same.
+
+
+```r
+mean_steps_daily_imputed <- mean(steps_per_date_imputed$steps)
+median_steps_daily_imputed <- median(steps_per_date_imputed$steps)
+print(paste("Mean steps per day (imputed): ", mean_steps_daily_imputed))
+```
+
+```
+## [1] "Mean steps per day (imputed):  10766.1886792453"
+```
+
+```r
+print(paste("Median steps per day (imputed): ", median_steps_daily_imputed))
+```
+
+```
+## [1] "Median steps per day (imputed):  10766.1886792453"
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
